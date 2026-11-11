@@ -13,23 +13,23 @@ pipeline {
         stage('Build') {
             steps {
                 echo 'Checking HTML project files'
-                bat 'dir'
+                sh 'ls -la'
             }
         }
 
         stage('Docker Build') {
             steps {
                 echo 'Building Docker image'
-                bat 'docker build -t my-html-website:latest .'
+                sh 'docker build -t my-html-website:latest .'
             }
         }
 
         stage('Deploy') {
             steps {
                 echo 'Deploying HTML website'
-                bat '''
-                docker rm -f my-html-container 2>NUL
-                docker run -d --name my-html-container -p 8081:80 my-html-website:latest
+                sh '''
+                    docker rm -f my-html-container || true
+                    docker run -d --name my-html-container -p 8081:80 my-html-website:latest
                 '''
             }
         }
@@ -59,23 +59,23 @@ pipeline {
         stage('Build') {
             steps {
                 echo 'Checking HTML project files'
-                bat 'dir'
+                sh 'ls -la'
             }
         }
 
         stage('Docker Build') {
             steps {
                 echo 'Building Docker image'
-                bat 'docker build -t my-html-website:latest .'
+                sh 'docker build -t my-html-website:latest .'
             }
         }
 
         stage('Deploy') {
             steps {
                 echo 'Deploying HTML website'
-                bat '''
-                docker rm -f my-html-container 2>NUL
-                docker run -d --name my-html-container -p 8081:80 my-html-website:latest
+                sh '''
+                    docker rm -f my-html-container || true
+                    docker run -d --name my-html-container -p 8081:80 my-html-website:latest
                 '''
             }
         }
