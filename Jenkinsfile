@@ -2,10 +2,16 @@
 pipeline {
     agent any
 
+    options {
+        disableConcurrentBuilds()
+        skipDefaultCheckout(true)
+    }
+
     stages {
+
         stage('Checkout') {
             steps {
-                echo 'Downloading HTML source code'
+                echo 'Downloading project from GitHub'
                 checkout scm
             }
         }
@@ -13,23 +19,41 @@ pipeline {
         stage('Build') {
             steps {
                 echo 'Checking HTML project files'
-                sh 'ls -la'
+                sh '''
+                    echo "Checking index.html..."
+                    test -f index.html
+                    echo "HTML file found successfully!"
+                    ls -la
+                '''
             }
         }
 
         stage('Docker Build') {
             steps {
-                echo 'Building Docker image'
-                sh 'docker build -t my-html-website:latest .'
+                echo 'Building website Docker image'
+                sh '''
+                    docker build -t my-html-website:latest .
+                '''
             }
         }
 
         stage('Deploy') {
             steps {
-                echo 'Deploying HTML website'
+                echo 'Deploying website using Nginx'
+
                 sh '''
                     docker rm -f my-html-container || true
-                    docker run -d --name my-html-container -p 8081:80 my-html-website:latest
+
+                    sleep 2
+
+                    docker run -d \
+                        --restart unless-stopped \
+                        --name my-html-container \
+                        -p 8081:80 \
+                        my-html-website:latest
+
+                    echo "Website deployment completed!"
+                    docker ps --filter name=my-html-container
                 '''
             }
         }
@@ -37,56 +61,16 @@ pipeline {
 
     post {
         success {
-            echo 'Website deployed successfully!'
+            echo 'SUCCESS: CI/CD pipeline completed!'
+            echo 'Website is available at http://localhost:8081'
         }
+
         failure {
-            echo 'Deployment failed. Check the console output.'
-        }
-    }
-}
-
-pipeline {
-    agent any
-
-    stages {
-        stage('Checkout') {
-            steps {
-                echo 'Downloading HTML source code'
-                checkout scm
-            }
+            echo 'FAILED: Please check the Console Output.'
         }
 
-        stage('Build') {
-            steps {
-                echo 'Checking HTML project files'
-                sh 'ls -la'
-            }
-        }
-
-        stage('Docker Build') {
-            steps {
-                echo 'Building Docker image'
-                sh 'docker build -t my-html-website:latest .'
-            }
-        }
-
-        stage('Deploy') {
-            steps {
-                echo 'Deploying HTML website'
-                sh '''
-                    docker rm -f my-html-container || true
-                    docker run -d --name my-html-container -p 8081:80 my-html-website:latest
-                '''
-            }
-        }
-    }
-
-    post {
-        success {
-            echo 'Website deployed successfully!'
-        }
-        failure {
-            echo 'Deployment failed. Check the console output.'
+        always {
+            echo 'Jenkins pipeline execution finished.'
         }
     }
 }
